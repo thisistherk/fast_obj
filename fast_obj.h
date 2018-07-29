@@ -204,12 +204,14 @@ void* array_realloc(void* ptr, unsigned int n, unsigned int b)
 }
 
 
+static
 void* file_open(const char* path)
 {
     return fopen(path, "rb");
 }
 
 
+static
 void file_close(void* file)
 {
     FILE* f;
@@ -219,6 +221,7 @@ void file_close(void* file)
 }
 
 
+static
 unsigned int file_read(void* file, void* dst, unsigned int bytes)
 {
     FILE* f;
@@ -228,6 +231,7 @@ unsigned int file_read(void* file, void* dst, unsigned int bytes)
 }
 
 
+static
 unsigned int file_size(void* file)
 {
     FILE* f;
