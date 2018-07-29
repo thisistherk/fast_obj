@@ -1,12 +1,8 @@
 # fast_obj
 
-Because the world needs another OBJ loader.  Much faster (5-10x) than other libraries, but much
-less tested.  If you want a stable well tested library, I'd probably go elsewhere for now.
-
+Because the world needs another OBJ loader.
 Single header library, should compile without warnings in both C89 or C++.
-
-Code pulled out of a larger project and massaged until it compiled, so if it looks a bit wierd in
-places, that's why!
+Much faster (5-10x) than other libraries tested.
 
 To use:
 
