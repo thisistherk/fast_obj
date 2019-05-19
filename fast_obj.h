@@ -109,6 +109,14 @@ void                            fast_obj_destroy(fastObjMesh* mesh);
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef FAST_OBJ_REALLOC
+#define FAST_OBJ_REALLOC        realloc
+#endif
+
+#ifndef FAST_OBJ_FREE
+#define FAST_OBJ_FREE           free
+#endif
+
 
 /* Size of buffer to read into */
 #define BUFFER_SIZE             65536
@@ -154,7 +162,7 @@ double POWER_10_NEG[MAX_POWER] =
 static
 void* memory_realloc(void* ptr, size_t bytes)
 {
-    return realloc(ptr, bytes);
+    return FAST_OBJ_REALLOC(ptr, bytes);
 }
 
 
