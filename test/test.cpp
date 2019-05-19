@@ -30,6 +30,8 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
+#include <chrono>
+
 using namespace tinyobj;
 
 
@@ -127,20 +129,40 @@ int main(int argc, const char* argv[])
     }
 
     printf("Reading with fast_obj\n");
+
+    auto fast_start = std::chrono::high_resolution_clock::now();
+
     fastObjMesh* m = fast_obj_read(argv[1]);
+
+    auto fast_end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> fast_time = fast_end - fast_start;
+
     if (!m)
     {
         printf("Failed!\n");
         return -1;
     }
 
+    printf("Took %0.2f secs\n", fast_time.count());
+
+
     printf("Reading with tiny_obj_loader\n");
     tinyObj o;
-    if (!read_tiny_obj(argv[1], &o))
+
+    auto tiny_start = std::chrono::high_resolution_clock::now();
+
+    bool success = read_tiny_obj(argv[1], &o);
+
+    auto tiny_end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> tiny_time = tiny_end - tiny_start;
+
+    if (!success)
     {
         printf("Failed!\n");
         return -1;
     }
+
+    printf("Took %0.2f secs\n", tiny_time.count());
 
     printf("Comparing...\n");
     compare_mesh(m, &o);
