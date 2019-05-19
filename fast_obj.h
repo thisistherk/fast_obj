@@ -27,6 +27,15 @@
 #ifndef FAST_OBJ_HDR
 #define FAST_OBJ_HDR
 
+
+typedef struct
+{
+    /* Path to texture */
+    const char*                 name;
+
+} fastObjTexture;
+
+
 typedef struct
 {
     /* Material name */
@@ -41,6 +50,21 @@ typedef struct
     float                       Ns;     /* Shininess */
     float                       Ni;     /* Index of refraction */
     float                       Tr;     /* Transparency */
+    float                       Tf[3];  /* Transmission filter */
+    float                       d;      /* Disolve (usually 1 - Tr) */
+    int                         illum;  /* Illumination model */
+
+    /* Texture maps */
+    fastObjTexture              map_Ka;
+    fastObjTexture              map_Kd;
+    fastObjTexture              map_Ks;
+    fastObjTexture              map_Ke;
+    fastObjTexture              map_Kt;
+    fastObjTexture              map_Ns;
+    fastObjTexture              map_Ni;
+    fastObjTexture              map_d;
+    fastObjTexture              map_bump;
+    
 
 } fastObjMaterial;
 
@@ -674,6 +698,17 @@ const char* parse_group(fastObjData* data, const char* ptr)
 
 
 static
+fastObjTexture map_default(void)
+{
+    fastObjTexture map;
+
+    map.name = 0;
+
+    return map;
+}
+
+
+static
 fastObjMaterial mtl_default(void)
 {
     fastObjMaterial mtl;
@@ -697,7 +732,21 @@ fastObjMaterial mtl_default(void)
     mtl.Kt[2] = 0.0;
     mtl.Ns    = 1.0;
     mtl.Ni    = 1.0;
-    mtl.Tr    = 0.0;
+    mtl.Tf[0] = 1.0;
+    mtl.Tf[1] = 1.0;
+    mtl.Tf[2] = 1.0;
+    mtl.d     = 1.0;
+    mtl.illum = 1;
+
+    mtl.map_Ka   = map_default();
+    mtl.map_Kd   = map_default();
+    mtl.map_Ks   = map_default();
+    mtl.map_Ke   = map_default();
+    mtl.map_Kt   = map_default();
+    mtl.map_Ns   = map_default();
+    mtl.map_Ni   = map_default();
+    mtl.map_d    = map_default();
+    mtl.map_bump = map_default();
 
     return mtl;
 }
@@ -748,9 +797,33 @@ const char* parse_usemtl(fastObjData* data, const char* ptr)
 
 
 static
+void map_clean(fastObjTexture* map)
+{
+    memory_dealloc((void*)(map->name));
+}
+
+
+static
 void mtl_clean(fastObjMaterial* mtl)
 {
+    map_clean(&mtl->map_Ka);
+    map_clean(&mtl->map_Kd);
+    map_clean(&mtl->map_Ks);
+    map_clean(&mtl->map_Ke);
+    map_clean(&mtl->map_Kt);
+    map_clean(&mtl->map_Ns);
+    map_clean(&mtl->map_Ni);
+    map_clean(&mtl->map_d);
+    map_clean(&mtl->map_bump);
+
     memory_dealloc((void*)(mtl->name));
+}
+
+
+static
+const char* read_mtl_int(const char* p, int* v)
+{
+    return parse_int(p, v);
 }
 
 
@@ -773,6 +846,32 @@ const char* read_mtl_triple(const char* p, float v[3])
 
 
 static
+const char* read_map(fastObjData* data, const char* ptr, fastObjTexture* map)
+{
+    const char* s;
+    const char* e;
+
+    ptr = skip_whitespace(ptr);
+
+    /* Don't support options at present */
+    if (*ptr == '-')
+        return ptr;
+
+
+    /* Read name */
+    s = ptr;
+    while (!is_whitespace(*ptr) && !is_newline(*ptr))
+        ptr++;
+
+    e = ptr;
+
+    map->name = string_concat(data->base, s, e);
+
+    return e;
+}
+
+
+static
 int read_mtllib(fastObjData* data, void* file)
 {
     unsigned int    n;
@@ -781,6 +880,7 @@ int read_mtllib(fastObjData* data, void* file)
     unsigned int    l;
     const char*     p;
     const char*     e;
+    int             found_d;
     fastObjMaterial mtl;
 
 
@@ -795,6 +895,8 @@ int read_mtllib(fastObjData* data, void* file)
     contents[l] = '\n';
 
     mtl = mtl_default();
+
+    found_d = 0;
 
     p = contents;
     e = contents + l;
@@ -857,16 +959,88 @@ int read_mtllib(fastObjData* data, void* file)
 
         case 'T':
             if (p[1] == 'r')
-                p = read_mtl_single(p + 2, &mtl.Tr);
+            {
+                float Tr;
+                p = read_mtl_single(p + 2, &Tr);
+                if (!found_d)
+                {
+                    /* Ignore Tr if we've already read d */
+                    mtl.d = 1.0f - Tr;
+                }
+            }
+            else if (p[1] == 'f')
+                p = read_mtl_triple(p + 2, mtl.Tf);
             break;
 
         case 'd':
             if (is_whitespace(p[1]))
             {
-                float d = 1.0f;;
-                p = read_mtl_single(p + 1, &d);
-                if (d >= 0.0f && d <= 1.0f)
-                    mtl.Tr = 1.0f - d;
+                p = read_mtl_single(p + 1, &mtl.d);
+                found_d = 1;
+            }
+            break;
+
+        case 'i':
+            p++;
+            if (p[0] == 'l' &&
+                p[1] == 'l' &&
+                p[2] == 'u' &&
+                p[3] == 'm' &&
+                is_whitespace(p[4]))
+            {
+                p = read_mtl_int(p + 4, &mtl.illum);
+            }
+            break;
+
+        case 'm':
+            p++;
+            if (p[0] == 'a' &&
+                p[1] == 'p' &&
+                p[2] == '_')
+            {
+                p += 3;
+                if (*p == 'K')
+                {
+                    p++;
+                    if (is_whitespace(p[1]))
+                    {
+                        if (*p == 'a')
+                            p = read_map(data, p + 1, &mtl.map_Ka);
+                        else if (*p == 'd')
+                            p = read_map(data, p + 1, &mtl.map_Kd);
+                        else if (*p == 's')
+                            p = read_map(data, p + 1, &mtl.map_Ks);
+                        else if (*p == 'e')
+                            p = read_map(data, p + 1, &mtl.map_Ke);
+                        else if (*p == 't')
+                            p = read_map(data, p + 1, &mtl.map_Kt);
+                    }
+                }
+                else if (*p == 'N')
+                {
+                    p++;
+                    if (is_whitespace(p[1]))
+                    {
+                        if (*p == 's')
+                            p = read_map(data, p + 1, &mtl.map_Ns);
+                        else if (*p == 'i')
+                            p = read_map(data, p + 1, &mtl.map_Ni);
+                    }
+                }
+                else if (*p == 'd')
+                {
+                    p++;
+                    if (is_whitespace(*p))
+                        p = read_map(data, p, &mtl.map_d);
+                }
+                else if (p[0] == 'b' &&
+                         p[1] == 'u' &&
+                         p[2] == 'm' &&
+                         p[3] == 'p' &&
+                         is_whitespace(p[4]))
+                {
+                    p = read_map(data, p + 4, &mtl.map_d);
+                }
             }
             break;
 
