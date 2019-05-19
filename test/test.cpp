@@ -43,10 +43,10 @@ struct tinyObj
 
 
 static
-void read_tiny_obj(const char* path, tinyObj* o)
+bool read_tiny_obj(const char* path, tinyObj* o)
 {
     std::string err;
-    LoadObj(&o->attrib, &o->shapes, &o->materials, &err, path, 0, false);
+    return LoadObj(&o->attrib, &o->shapes, &o->materials, &err, path, 0, false);
 }
 
 
@@ -70,7 +70,11 @@ void compare_mesh(fastObjMesh* m, tinyObj* o)
         const fastObjGroup& grp = m->groups[ii];
         const shape_t&      shp = o->shapes[ii];
 
-        CHECK(shp.name == grp.name);
+        std::string grp_name;
+        if (grp.name)
+            grp_name = std::string(grp.name);
+
+        CHECK(shp.name == grp_name);
         CHECK(shp.mesh.num_face_vertices.size() == grp.face_count);
 
         int idx = 0;
@@ -124,10 +128,19 @@ int main(int argc, const char* argv[])
 
     printf("Reading with fast_obj\n");
     fastObjMesh* m = fast_obj_read(argv[1]);
+    if (!m)
+    {
+        printf("Failed!\n");
+        return -1;
+    }
 
     printf("Reading with tiny_obj_loader\n");
     tinyObj o;
-    read_tiny_obj(argv[1], &o);
+    if (!read_tiny_obj(argv[1], &o))
+    {
+        printf("Failed!\n");
+        return -1;
+    }
 
     printf("Comparing...\n");
     compare_mesh(m, &o);
