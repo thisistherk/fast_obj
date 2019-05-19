@@ -49,9 +49,8 @@ typedef struct
     float                       Kt[3];  /* Transmittance */
     float                       Ns;     /* Shininess */
     float                       Ni;     /* Index of refraction */
-    float                       Tr;     /* Transparency */
     float                       Tf[3];  /* Transmission filter */
-    float                       d;      /* Disolve (usually 1 - Tr) */
+    float                       d;      /* Disolve (alpha) */
     int                         illum;  /* Illumination model */
 
     /* Texture maps */
