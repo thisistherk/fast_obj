@@ -169,7 +169,7 @@ void* memory_realloc(void* ptr, size_t bytes)
 static
 void memory_dealloc(void* ptr)
 {
-    free(ptr);
+    FAST_OBJ_FREE(ptr);
 }
 
 
