@@ -48,7 +48,8 @@ static
 bool read_tiny_obj(const char* path, tinyObj* o)
 {
     std::string err;
-    return LoadObj(&o->attrib, &o->shapes, &o->materials, &err, path, 0, false);
+    std::string warn;
+    return LoadObj(&o->attrib, &o->shapes, &o->materials, &warn, &err, path, 0, false);
 }
 
 
