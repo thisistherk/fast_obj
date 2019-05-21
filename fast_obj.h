@@ -263,20 +263,23 @@ unsigned int file_read(void* file, void* dst, unsigned int bytes)
 
 
 static
-unsigned int file_size(void* file)
+unsigned long file_size(void* file)
 {
     FILE* f;
-    off_t p;
-    off_t n;
+    long p;
+    long n;
     
     f = (FILE*)(file);
 
-    p = ftello(f);
-    fseeko(f, 0, SEEK_END);
-    n = ftello(f);
-    fseeko(f, p, SEEK_SET);
+    p = ftell(f);
+    fseek(f, 0, SEEK_END);
+    n = ftell(f);
+    fseek(f, p, SEEK_SET);
 
-    return (unsigned int)(n);
+    if (n > 0)
+        return (unsigned long)(n);
+    else
+        return 0;
 }
 
 
@@ -873,7 +876,7 @@ const char* read_map(fastObjData* data, const char* ptr, fastObjTexture* map)
 static
 int read_mtllib(fastObjData* data, void* file)
 {
-    unsigned int    n;
+    unsigned long   n;
     const char*     s;
     char*           contents;
     unsigned int    l;
