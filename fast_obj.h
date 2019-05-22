@@ -261,7 +261,7 @@ void file_close(void* file)
 
 
 static
-unsigned int file_read(void* file, void* dst, unsigned int bytes)
+size_t file_read(void* file, void* dst, unsigned int bytes)
 {
     FILE* f;
     
@@ -294,8 +294,8 @@ unsigned long file_size(void* file)
 static
 const char* string_copy(const char* s, const char* e)
 {
-    unsigned int n;
-    char*        p;
+    size_t n;
+    char*  p;
         
     n = e - s; 
     p = (char*)(memory_realloc(0, n + 1));
@@ -310,7 +310,7 @@ const char* string_copy(const char* s, const char* e)
 
 
 static
-const char* string_substr(const char* s, unsigned int a, unsigned int b)
+const char* string_substr(const char* s, size_t a, size_t b)
 {
     return string_copy(s + a, s + b);
 }
@@ -319,9 +319,9 @@ const char* string_substr(const char* s, unsigned int a, unsigned int b)
 static
 char* string_concat(const char* a, const char* s, const char* e)
 {
-    unsigned int an;
-    unsigned int sn;
-    char*        p;
+    size_t an;
+    size_t sn;
+    char*  p;
         
     an = a ? strlen(a) : 0;
     sn = e - s; 
@@ -349,7 +349,7 @@ int string_equal(const char* a, const char* s, const char* e)
 
 
 static
-int string_find_last(const char* s, char c, unsigned int* p)
+int string_find_last(const char* s, char c, size_t* p)
 {
     const char* e;
 
@@ -903,7 +903,7 @@ int read_mtllib(fastObjData* data, void* file)
     unsigned long   n;
     const char*     s;
     char*           contents;
-    unsigned int    l;
+    size_t          l;
     const char*     p;
     const char*     e;
     int             found_d;
@@ -1244,7 +1244,7 @@ fastObjMesh* fast_obj_read(const char* path)
     char*        end;
     char*        last;
     unsigned int read;
-    unsigned int sep;
+    size_t       sep;
     unsigned int bytes;
 
 

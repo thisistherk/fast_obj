@@ -68,7 +68,7 @@ void compare_mesh(fastObjMesh* m, tinyObj* o)
 {
     CHECK(m->group_count == o->shapes.size());
 
-    for (int ii = 0; ii < m->group_count; ii++)
+    for (unsigned int ii = 0; ii < m->group_count; ii++)
     {
         const fastObjGroup& grp = m->groups[ii];
         const shape_t&      shp = o->shapes[ii];
@@ -81,11 +81,11 @@ void compare_mesh(fastObjMesh* m, tinyObj* o)
         CHECK(shp.mesh.num_face_vertices.size() == grp.face_count);
 
         int idx = 0;
-        for (int jj = 0; jj < grp.face_count; jj++)
+        for (unsigned int jj = 0; jj < grp.face_count; jj++)
         {
             CHECK(shp.mesh.num_face_vertices[jj] == grp.vertices[jj]);
 
-            for (int kk = 0; kk < grp.vertices[jj]; kk++)
+            for (unsigned int kk = 0; kk < grp.vertices[jj]; kk++)
             {
                 index_t oi = shp.mesh.indices[idx];
                 fastObjIndex mi = grp.indices[idx];
