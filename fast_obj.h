@@ -140,6 +140,14 @@ void                            fast_obj_destroy(fastObjMesh* mesh);
 #define FAST_OBJ_FREE           free
 #endif
 
+#ifdef _WIN32
+#define FAST_OBJ_SEPARATOR      '\\'
+#define FAST_OBJ_OTHER_SEP      '/'
+#else
+#define FAST_OBJ_SEPARATOR      '/'
+#define FAST_OBJ_OTHER_SEP      '\\'
+#endif
+
 
 /* Size of buffer to read into */
 #define BUFFER_SIZE             65536
@@ -309,7 +317,7 @@ const char* string_substr(const char* s, unsigned int a, unsigned int b)
 
 
 static
-const char* string_concat(const char* a, const char* s, const char* e)
+char* string_concat(const char* a, const char* s, const char* e)
 {
     unsigned int an;
     unsigned int sn;
@@ -358,6 +366,18 @@ int string_find_last(const char* s, char c, unsigned int* p)
     }
 
     return 0;
+}
+
+
+static
+void string_fix_separators(char* s)
+{
+    while (*s)
+    {
+        if (*s == FAST_OBJ_OTHER_SEP)
+            *s = FAST_OBJ_SEPARATOR;
+        s++;
+    }
 }
 
 
@@ -852,6 +872,7 @@ const char* read_map(fastObjData* data, const char* ptr, fastObjTexture* map)
 {
     const char* s;
     const char* e;
+    char*       name;
 
     ptr = skip_whitespace(ptr);
 
@@ -867,7 +888,10 @@ const char* read_map(fastObjData* data, const char* ptr, fastObjTexture* map)
 
     e = ptr;
 
-    map->name = string_concat(data->base, s, e);
+    name = string_concat(data->base, s, e);
+    string_fix_separators(name);
+
+    map->name = name;
 
     return e;
 }
@@ -1068,7 +1092,7 @@ const char* parse_mtllib(fastObjData* data, const char* ptr)
 {
     const char* s;
     const char* e;
-    const char* lib;
+    char*       lib;
     void*       file;
 
 
@@ -1083,6 +1107,8 @@ const char* parse_mtllib(fastObjData* data, const char* ptr)
     lib = string_concat(data->base, s, e);
     if (lib)
     {
+        string_fix_separators(lib);
+
         file = file_open(lib);
         if (file)
         {
@@ -1262,7 +1288,7 @@ fastObjMesh* fast_obj_read(const char* path)
 
 
     /* Find base path for materials/textures */
-    if (string_find_last(path, '/', &sep))
+    if (string_find_last(path, FAST_OBJ_SEPARATOR, &sep))
         data.base = string_substr(path, 0, sep + 1);
 
 
