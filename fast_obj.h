@@ -803,7 +803,7 @@ const char* parse_usemtl(fastObjData* data, const char* ptr)
     while (idx < array_size(data->mesh->materials))
     {
         mtl = &data->mesh->materials[idx];
-        if (mtl->name && (mtl->name, s, e))
+        if (mtl->name && string_equal(mtl->name, s, e))
             break;
 
         idx++;
