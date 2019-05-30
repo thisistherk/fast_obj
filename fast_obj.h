@@ -31,7 +31,7 @@
 typedef struct
 {
     /* Path to texture */
-    const char*                 name;
+    char*                       name;
 
 } fastObjTexture;
 
@@ -39,7 +39,7 @@ typedef struct
 typedef struct
 {
     /* Material name */
-    const char*                 name;
+    char*                       name;
 
     /* Parameters */
     float                       Ka[3];  /* Ambient */
@@ -80,7 +80,7 @@ typedef struct
 typedef struct
 {
     /* Group name */
-    const char*                 name;
+    char*                       name;
 
     /* Number of faces */
     unsigned int                face_count;
@@ -170,7 +170,7 @@ typedef struct
     unsigned int                line;
 
     /* Base path for materials/textures */
-    const char*                 base;
+    char*                       base;
 
 } fastObjData;
 
@@ -261,7 +261,7 @@ void file_close(void* file)
 
 
 static
-size_t file_read(void* file, void* dst, unsigned int bytes)
+size_t file_read(void* file, void* dst, size_t bytes)
 {
     FILE* f;
     
@@ -292,12 +292,12 @@ unsigned long file_size(void* file)
 
 
 static
-const char* string_copy(const char* s, const char* e)
+char* string_copy(const char* s, const char* e)
 {
     size_t n;
     char*  p;
         
-    n = e - s; 
+    n = (size_t)(e - s);
     p = (char*)(memory_realloc(0, n + 1));
     if (p)
     {
@@ -310,7 +310,7 @@ const char* string_copy(const char* s, const char* e)
 
 
 static
-const char* string_substr(const char* s, size_t a, size_t b)
+char* string_substr(const char* s, size_t a, size_t b)
 {
     return string_copy(s + a, s + b);
 }
@@ -324,7 +324,7 @@ char* string_concat(const char* a, const char* s, const char* e)
     char*  p;
         
     an = a ? strlen(a) : 0;
-    sn = e - s; 
+    sn = (size_t)(e - s);
     p = (char*)(memory_realloc(0, an + sn + 1));
     if (p)
     {
@@ -360,7 +360,7 @@ int string_find_last(const char* s, char c, size_t* p)
 
         if (*e == c)
         {
-            *p = e - s;
+            *p = (size_t)(e - s);
             return 1;
         }
     }
@@ -447,7 +447,7 @@ fastObjGroup group_default(void)
 static
 void group_clean(fastObjGroup* group)
 {
-    memory_dealloc((void*)(group->name));
+    memory_dealloc(group->name);
 
     array_clean(group->materials);
     array_clean(group->vertices);
@@ -821,7 +821,7 @@ const char* parse_usemtl(fastObjData* data, const char* ptr)
 static
 void map_clean(fastObjTexture* map)
 {
-    memory_dealloc((void*)(map->name));
+    memory_dealloc(map->name);
 }
 
 
@@ -838,7 +838,7 @@ void mtl_clean(fastObjMaterial* mtl)
     map_clean(&mtl->map_d);
     map_clean(&mtl->map_bump);
 
-    memory_dealloc((void*)(mtl->name));
+    memory_dealloc(mtl->name);
 }
 
 
@@ -1116,7 +1116,7 @@ const char* parse_mtllib(fastObjData* data, const char* ptr)
             file_close(file);
         }
 
-        memory_dealloc((void*)(lib));
+        memory_dealloc(lib);
     }
 
     return ptr;
@@ -1359,7 +1359,7 @@ fastObjMesh* fast_obj_read(const char* path)
 
     /* Clean up */
     memory_dealloc(buffer);
-    memory_dealloc((void*)(data.base));
+    memory_dealloc(data.base);
 
     file_close(file);
 
