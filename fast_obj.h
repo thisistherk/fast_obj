@@ -664,19 +664,19 @@ const char* parse_face(fastObjData* data, const char* ptr)
         }
 
         if (v < 0)
-            vn.p = array_size(data->mesh->positions) - (unsigned int)(-v);
+            vn.p = (array_size(data->mesh->positions) / 3) - (unsigned int)(-v);
         else
             vn.p = (unsigned int)(v);
 
         if (t < 0)
-            vn.t = array_size(data->mesh->texcoords) - (unsigned int)(-t);
+            vn.t = (array_size(data->mesh->texcoords) / 2) - (unsigned int)(-t);
         else if (t > 0)
             vn.t = (unsigned int)(t);
         else
             vn.t = 0;
 
         if (n < 0)
-            vn.n = array_size(data->mesh->normals) - (unsigned int)(-n);
+            vn.n = (array_size(data->mesh->normals) / 3) - (unsigned int)(-n);
         else if (n > 0)
             vn.n = (unsigned int)(n);
         else
