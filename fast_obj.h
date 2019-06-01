@@ -1153,6 +1153,9 @@ void parse_buffer(fastObjData* data, const char* ptr, const char* end)
             case 'n':
                 p = parse_normal(data, p);
                 break;
+
+            default:
+                p--; /* roll p++ back in case *p was a newline */
             }
             break;
 
@@ -1165,6 +1168,9 @@ void parse_buffer(fastObjData* data, const char* ptr, const char* end)
             case '\t':
                 p = parse_face(data, p);
                 break;
+
+            default:
+                p--; /* roll p++ back in case *p was a newline */
             }
             break;
 
@@ -1177,6 +1183,9 @@ void parse_buffer(fastObjData* data, const char* ptr, const char* end)
             case '\t':
                 p = parse_group(data, p);
                 break;
+
+            default:
+                p--; /* roll p++ back in case *p was a newline */
             }
             break;
 
