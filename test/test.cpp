@@ -83,12 +83,14 @@ void compare_mesh(fastObjMesh* m, tinyObj* o)
         int idx = 0;
         for (unsigned int jj = 0; jj < grp.face_count; jj++)
         {
-            CHECK(shp.mesh.num_face_vertices[jj] == grp.vertices[jj]);
+            unsigned int fv = m->face_vertices[grp.face_offset + jj];
 
-            for (unsigned int kk = 0; kk < grp.vertices[jj]; kk++)
+            CHECK(shp.mesh.num_face_vertices[jj] == fv);
+
+            for (unsigned int kk = 0; kk < fv; kk++)
             {
                 index_t oi = shp.mesh.indices[idx];
-                fastObjIndex mi = grp.indices[idx];
+                fastObjIndex mi = m->indices[grp.index_offset + idx];
 
                 CHECK(oi.vertex_index + 1 == mi.p);
                 CHECK(oi.texcoord_index + 1 == mi.t);
