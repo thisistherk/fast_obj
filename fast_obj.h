@@ -1076,7 +1076,7 @@ int read_mtllib(fastObjData* data, void* file)
                          p[3] == 'p' &&
                          is_whitespace(p[4]))
                 {
-                    p = read_map(data, p + 4, &mtl.map_d);
+                    p = read_map(data, p + 4, &mtl.map_bump);
                 }
             }
             break;
