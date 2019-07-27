@@ -349,10 +349,10 @@ char* string_concat(const char* a, const char* s, const char* e)
 static
 int string_equal(const char* a, const char* s, const char* e)
 {
-    while (*a++ == *s++ && s != e)
-        ;
+    size_t an = strlen(a);
+    size_t sn = (size_t)(e - s);
 
-    return (*a == '\0' && s == e);
+    return an == sn && memcmp(a, s, an) == 0;
 }
 
 
