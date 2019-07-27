@@ -1367,7 +1367,7 @@ fastObjMesh* fast_obj_read(const char* path)
 
         /* Copy overflow for next buffer */
         bytes = (unsigned int)(end - last);
-        memcpy(buffer, last, bytes);
+        memmove(buffer, last, bytes);
         start = buffer + bytes;
     }
 
