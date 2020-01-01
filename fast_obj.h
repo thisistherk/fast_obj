@@ -66,7 +66,6 @@ typedef struct
     fastObjTexture              map_Ni;
     fastObjTexture              map_d;
     fastObjTexture              map_bump;
-    
 
 } fastObjMaterial;
 
@@ -79,9 +78,9 @@ typedef FAST_OBJ_UINT_TYPE fastObjUInt;
 
 typedef struct
 {
-	fastObjUInt                p;
-	fastObjUInt                t;
-	fastObjUInt                n;
+    fastObjUInt                 p;
+    fastObjUInt                 t;
+    fastObjUInt                 n;
 
 } fastObjIndex;
 
@@ -233,11 +232,11 @@ void memory_dealloc(void* ptr)
 
 static void* array_realloc(void* ptr, fastObjUInt n, fastObjUInt b)
 {
-	fastObjUInt sz = array_size(ptr);
-	fastObjUInt nsz = sz + n;
-	fastObjUInt cap = array_capacity(ptr);
-	fastObjUInt ncap = 3 * cap / 2;
-	fastObjUInt* r;
+    fastObjUInt sz = array_size(ptr);
+    fastObjUInt nsz = sz + n;
+    fastObjUInt cap = array_capacity(ptr);
+    fastObjUInt ncap = 3 * cap / 2;
+    fastObjUInt* r;
 
 
     if (ncap < nsz)
@@ -673,21 +672,21 @@ const char* parse_face(fastObjData* data, const char* ptr)
         }
 
         if (v < 0)
-			vn.p = (array_size(data->mesh->positions) / 3) - (fastObjUInt)(-v);
+            vn.p = (array_size(data->mesh->positions) / 3) - (fastObjUInt)(-v);
         else
             vn.p = (size_t)(v);
 
         if (t < 0)
-			vn.t = (array_size(data->mesh->texcoords) / 2) - (fastObjUInt)(-t);
+            vn.t = (array_size(data->mesh->texcoords) / 2) - (fastObjUInt)(-t);
         else if (t > 0)
             vn.t = (size_t)(t);
         else
             vn.t = 0;
 
         if (n < 0)
-			vn.n = (array_size(data->mesh->normals) / 3) - (fastObjUInt)(-n);
+            vn.n = (array_size(data->mesh->normals) / 3) - (fastObjUInt)(-n);
         else if (n > 0)
-			vn.n = (fastObjUInt)(n);
+            vn.n = (fastObjUInt)(n);
         else
             vn.n = 0;
 
@@ -1270,9 +1269,9 @@ fastObjMesh* fast_obj_read(const char* path)
     char*        start;
     char*        end;
     char*        last;
-	fastObjUInt  read;
-	size_t       sep;
-	fastObjUInt  bytes;
+    fastObjUInt  read;
+    size_t       sep;
+    fastObjUInt  bytes;
 
 
     /* Open file */
@@ -1331,7 +1330,7 @@ fastObjMesh* fast_obj_read(const char* path)
     for (;;)
     {
         /* Read another buffer's worth from file */
-		read = (fastObjUInt)(file_read(file, start, BUFFER_SIZE));
+        read = (fastObjUInt)(file_read(file, start, BUFFER_SIZE));
         if (read == 0 && start == buffer)
             break;
 
@@ -1370,7 +1369,7 @@ fastObjMesh* fast_obj_read(const char* path)
 
 
         /* Copy overflow for next buffer */
-		bytes = (fastObjUInt)(end - last);
+        bytes = (fastObjUInt)(end - last);
         memmove(buffer, last, bytes);
         start = buffer + bytes;
     }
