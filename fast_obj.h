@@ -203,7 +203,7 @@ double POWER_10_NEG[MAX_POWER] =
 };
 
 
-static void* memory_realloc(void* ptr, fastObjUInt bytes)
+static void* memory_realloc(void* ptr, size_t bytes)
 {
     return FAST_OBJ_REALLOC(ptr, bytes);
 }
