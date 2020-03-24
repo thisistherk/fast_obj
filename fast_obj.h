@@ -132,9 +132,16 @@ typedef struct
 
 } fastObjMesh;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 fastObjMesh*                    fast_obj_read(const char* path);
 void                            fast_obj_destroy(fastObjMesh* mesh);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
