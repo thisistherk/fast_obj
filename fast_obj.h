@@ -686,12 +686,12 @@ const char* parse_face(fastObjData* data, const char* ptr)
         if (v < 0)
             vn.p = (array_size(data->mesh->positions) / 3) - (fastObjUInt)(-v);
         else
-            vn.p = (size_t)(v);
+            vn.p = (fastObjUInt)(v);
 
         if (t < 0)
             vn.t = (array_size(data->mesh->texcoords) / 2) - (fastObjUInt)(-t);
         else if (t > 0)
-            vn.t = (size_t)(t);
+            vn.t = (fastObjUInt)(t);
         else
             vn.t = 0;
 
