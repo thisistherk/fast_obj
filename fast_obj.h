@@ -1,8 +1,11 @@
 /*
+ * fast_obj
+ *
+ * Version 1.0
  *
  * MIT License
  *
- * Copyright (c) 2018 Richard Knight
+ * Copyright (c) 2018-2020 Richard Knight
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +29,10 @@
 
 #ifndef FAST_OBJ_HDR
 #define FAST_OBJ_HDR
+
+#define FAST_OBJ_VERSION_MAJOR  1
+#define FAST_OBJ_VERSION_MINOR  0
+#define FAST_OBJ_VERSION        ((FAST_OBJ_VERSION_MAJOR << 8) | FAST_OBJ_VERSION_MINOR)
 
 
 typedef struct
