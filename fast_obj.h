@@ -820,12 +820,6 @@ const char* parse_usemtl(fastObjData* data, const char* ptr)
 
     e = ptr;
 
-
-    /* If there are no materials yet, add a dummy invalid material at index 0 */
-    if (array_empty(data->mesh->materials))
-        array_push(data->mesh->materials, mtl_default());
-
-
     /* Find an existing material with the same name */
     idx = 0;
     while (idx < array_size(data->mesh->materials))
@@ -837,8 +831,14 @@ const char* parse_usemtl(fastObjData* data, const char* ptr)
         idx++;
     }
 
+    /* If doesn't exists, create a default one with this name
+    Note: this case happens when OBJ doesn't have its MTL */
     if (idx == array_size(data->mesh->materials))
-        idx = 0;
+    {
+        fastObjMaterial new_mtl = mtl_default();
+        new_mtl.name = string_copy(s, e);
+        array_push(data->mesh->materials, new_mtl);
+    }
 
     data->material = idx;
 
