@@ -1338,6 +1338,11 @@ fastObjMesh* fast_obj_read(const char* path)
     /* Find base path for materials/textures */
     if (string_find_last(path, FAST_OBJ_SEPARATOR, &sep))
         data.base = string_substr(path, 0, sep + 1);
+#ifdef _WIN32
+    /* Check for the other direction slash on windows too, but not linux/mac where it's a valid char */
+    else if (string_find_last(path, FAST_OBJ_OTHER_SEP, &sep))
+        data.base = string_substr(path, 0, sep + 1);
+#endif
 
 
     /* Create buffer for reading file */
