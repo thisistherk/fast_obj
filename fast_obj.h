@@ -34,6 +34,12 @@
 #define FAST_OBJ_VERSION_MINOR  0
 #define FAST_OBJ_VERSION        ((FAST_OBJ_VERSION_MAJOR << 8) | FAST_OBJ_VERSION_MINOR)
 
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <stdlib.h>
+
 
 typedef struct
 {
@@ -141,10 +147,10 @@ typedef struct
 
 typedef struct
 {
-    void*(*file_open)(const char* path, void* user_data);
-    void(*file_close)(void* file, void* user_data);
-    size_t(*file_read)(void* file, void* dst, size_t bytes, void* user_data);
-    unsigned long(*file_size)(void* file, void* user_data);
+    void*(*file_open)           (const char* path, void* user_data);
+    void(*file_close)           (void* file, void* user_data);
+    size_t(*file_read)          (void* file, void* dst, size_t bytes, void* user_data);
+    unsigned long(*file_size)   (void* file, void* user_data);
 } fastObjCallbacks;
 
 #ifdef __cplusplus
@@ -159,13 +165,16 @@ void                            fast_obj_destroy(fastObjMesh* mesh);
 }
 #endif
 
+#ifdef _WIN32
+#undef _CRT_SECURE_NO_WARNINGS
+#endif
+
 #endif
 
 
 #ifdef FAST_OBJ_IMPLEMENTATION
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #ifndef FAST_OBJ_REALLOC
@@ -280,6 +289,7 @@ static void* array_realloc(void* ptr, fastObjUInt n, fastObjUInt b)
 static
 void* file_open(const char* path, void* user_data)
 {
+    (void)(user_data);
     return fopen(path, "rb");
 }
 
@@ -287,6 +297,7 @@ void* file_open(const char* path, void* user_data)
 static
 void file_close(void* file, void* user_data)
 {
+    (void)(user_data);
     FILE* f;
     
     f = (FILE*)(file);
@@ -297,6 +308,7 @@ void file_close(void* file, void* user_data)
 static
 size_t file_read(void* file, void* dst, size_t bytes, void* user_data)
 {
+    (void)(user_data);
     FILE* f;
     
     f = (FILE*)(file);
@@ -307,6 +319,7 @@ size_t file_read(void* file, void* dst, size_t bytes, void* user_data)
 static
 unsigned long file_size(void* file, void* user_data)
 {
+    (void)(user_data);
     FILE* f;
     long p;
     long n;
@@ -1275,7 +1288,7 @@ fastObjMesh* fast_obj_read(const char* path)
     callbacks.file_read = file_read;
     callbacks.file_size = file_size;
 
-    return fast_obj_read_with_callbacks(path, &callbacks, nullptr);
+    return fast_obj_read_with_callbacks(path, &callbacks, 0);
 }
 
 
