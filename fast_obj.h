@@ -139,11 +139,20 @@ typedef struct
 
 } fastObjMesh;
 
+typedef struct
+{
+    void*(*file_open)(const char* path, void* user_data);
+    void(*file_close)(void* file, void* user_data);
+    size_t(*file_read)(void* file, void* dst, size_t bytes, void* user_data);
+    unsigned long(*file_size)(void* file, void* user_data);
+} fastObjCallbacks;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 fastObjMesh*                    fast_obj_read(const char* path);
+fastObjMesh*                    fast_obj_read_with_callbacks(const char* path, const fastObjCallbacks* callbacks, void* user_data);
 void                            fast_obj_destroy(fastObjMesh* mesh);
 
 #ifdef __cplusplus
@@ -269,14 +278,14 @@ static void* array_realloc(void* ptr, fastObjUInt n, fastObjUInt b)
 
 
 static
-void* file_open(const char* path)
+void* file_open(const char* path, void* user_data)
 {
     return fopen(path, "rb");
 }
 
 
 static
-void file_close(void* file)
+void file_close(void* file, void* user_data)
 {
     FILE* f;
     
@@ -286,7 +295,7 @@ void file_close(void* file)
 
 
 static
-size_t file_read(void* file, void* dst, size_t bytes)
+size_t file_read(void* file, void* dst, size_t bytes, void* user_data)
 {
     FILE* f;
     
@@ -296,7 +305,7 @@ size_t file_read(void* file, void* dst, size_t bytes)
 
 
 static
-unsigned long file_size(void* file)
+unsigned long file_size(void* file, void* user_data)
 {
     FILE* f;
     long p;
@@ -910,7 +919,7 @@ const char* read_map(fastObjData* data, const char* ptr, fastObjTexture* map)
 
 
 static
-int read_mtllib(fastObjData* data, void* file)
+int read_mtllib(fastObjData* data, void* file, const fastObjCallbacks* callbacks, void* user_data)
 {
     unsigned long   n;
     const char*     s;
@@ -923,13 +932,13 @@ int read_mtllib(fastObjData* data, void* file)
 
 
     /* Read entire file */
-    n = file_size(file);
+    n = callbacks->file_size(file, user_data);
 
     contents = (char*)(memory_realloc(0, n + 1));
     if (!contents)
         return 0;
 
-    l = file_read(file, contents, n);
+    l = callbacks->file_read(file, contents, n, user_data);
     contents[l] = '\n';
 
     mtl = mtl_default();
@@ -1100,7 +1109,7 @@ int read_mtllib(fastObjData* data, void* file)
 
 
 static
-const char* parse_mtllib(fastObjData* data, const char* ptr)
+const char* parse_mtllib(fastObjData* data, const char* ptr, const fastObjCallbacks* callbacks, void* user_data)
 {
     const char* s;
     const char* e;
@@ -1121,11 +1130,11 @@ const char* parse_mtllib(fastObjData* data, const char* ptr)
     {
         string_fix_separators(lib);
 
-        file = file_open(lib);
+        file = callbacks->file_open(lib, user_data);
         if (file)
         {
-            read_mtllib(data, file);
-            file_close(file);
+            read_mtllib(data, file, callbacks, user_data);
+            callbacks->file_close(file, user_data);
         }
 
         memory_dealloc(lib);
@@ -1136,7 +1145,7 @@ const char* parse_mtllib(fastObjData* data, const char* ptr)
 
 
 static
-void parse_buffer(fastObjData* data, const char* ptr, const char* end)
+void parse_buffer(fastObjData* data, const char* ptr, const char* end, const fastObjCallbacks* callbacks, void* user_data)
 {
     const char* p;
     
@@ -1209,7 +1218,7 @@ void parse_buffer(fastObjData* data, const char* ptr, const char* end)
                 p[3] == 'i' &&
                 p[4] == 'b' &&
                 is_whitespace(p[5]))
-                p = parse_mtllib(data, p + 5);
+                p = parse_mtllib(data, p + 5, callbacks, user_data);
             break;
 
         case 'u':
@@ -1260,6 +1269,18 @@ void fast_obj_destroy(fastObjMesh* m)
 
 fastObjMesh* fast_obj_read(const char* path)
 {
+    fastObjCallbacks callbacks;
+    callbacks.file_open = file_open;
+    callbacks.file_close = file_close;
+    callbacks.file_read = file_read;
+    callbacks.file_size = file_size;
+
+    return fast_obj_read_with_callbacks(path, &callbacks, nullptr);
+}
+
+
+fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbacks* callbacks, void* user_data)
+{
     fastObjData  data;
     fastObjMesh* m;
     void*        file;
@@ -1270,9 +1291,13 @@ fastObjMesh* fast_obj_read(const char* path)
     fastObjUInt  read;
     fastObjUInt  bytes;
 
+    /* Check if callbacks are valid */
+    if(!callbacks)
+        return 0;
+
 
     /* Open file */
-    file = file_open(path);
+    file = callbacks->file_open(path, user_data);
     if (!file)
         return 0;
 
@@ -1335,7 +1360,7 @@ fastObjMesh* fast_obj_read(const char* path)
     for (;;)
     {
         /* Read another buffer's worth from file */
-        read = (fastObjUInt)(file_read(file, start, BUFFER_SIZE));
+        read = (fastObjUInt)(callbacks->file_read(file, start, BUFFER_SIZE, user_data));
         if (read == 0 && start == buffer)
             break;
 
@@ -1370,7 +1395,7 @@ fastObjMesh* fast_obj_read(const char* path)
 
 
         /* Process buffer */
-        parse_buffer(&data, buffer, last);
+        parse_buffer(&data, buffer, last, callbacks, user_data);
 
 
         /* Copy overflow for next buffer */
@@ -1396,7 +1421,7 @@ fastObjMesh* fast_obj_read(const char* path)
     memory_dealloc(buffer);
     memory_dealloc(data.base);
 
-    file_close(file);
+    callbacks->file_close(file, user_data);
 
     return m;
 }
