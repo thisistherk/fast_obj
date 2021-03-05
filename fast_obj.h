@@ -34,10 +34,6 @@
 #define FAST_OBJ_VERSION_MINOR  0
 #define FAST_OBJ_VERSION        ((FAST_OBJ_VERSION_MAJOR << 8) | FAST_OBJ_VERSION_MINOR)
 
-#ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 #include <stdlib.h>
 
 
@@ -163,10 +159,6 @@ void                            fast_obj_destroy(fastObjMesh* mesh);
 
 #ifdef __cplusplus
 }
-#endif
-
-#ifdef _WIN32
-#undef _CRT_SECURE_NO_WARNINGS
 #endif
 
 #endif
@@ -297,8 +289,8 @@ void* file_open(const char* path, void* user_data)
 static
 void file_close(void* file, void* user_data)
 {
+	FILE* f;
     (void)(user_data);
-    FILE* f;
     
     f = (FILE*)(file);
     fclose(f);
@@ -308,8 +300,8 @@ void file_close(void* file, void* user_data)
 static
 size_t file_read(void* file, void* dst, size_t bytes, void* user_data)
 {
+	FILE* f;
     (void)(user_data);
-    FILE* f;
     
     f = (FILE*)(file);
     return fread(dst, 1, bytes, f);
@@ -319,11 +311,11 @@ size_t file_read(void* file, void* dst, size_t bytes, void* user_data)
 static
 unsigned long file_size(void* file, void* user_data)
 {
-    (void)(user_data);
     FILE* f;
     long p;
     long n;
-    
+    (void)(user_data);
+	
     f = (FILE*)(file);
 
     p = ftell(f);
