@@ -1085,7 +1085,7 @@ int read_mtllib(fastObjData* data, void* file, const fastObjCallbacks* callbacks
                     if (is_whitespace(*p))
                         p = read_map(data, p, &mtl.map_d);
                 }
-                else if (p[0] == 'b' &&
+                else if ((p[0] == 'b' || p[0] == 'B') &&
                          p[1] == 'u' &&
                          p[2] == 'm' &&
                          p[3] == 'p' &&
