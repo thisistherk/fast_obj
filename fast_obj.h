@@ -31,7 +31,7 @@
 #define FAST_OBJ_HDR
 
 #define FAST_OBJ_VERSION_MAJOR  1
-#define FAST_OBJ_VERSION_MINOR  0
+#define FAST_OBJ_VERSION_MINOR  1
 #define FAST_OBJ_VERSION        ((FAST_OBJ_VERSION_MAJOR << 8) | FAST_OBJ_VERSION_MINOR)
 
 #include <stdlib.h>
@@ -143,10 +143,10 @@ typedef struct
 
 typedef struct
 {
-    void*(*file_open)           (const char* path, void* user_data);
-    void(*file_close)           (void* file, void* user_data);
-    size_t(*file_read)          (void* file, void* dst, size_t bytes, void* user_data);
-    unsigned long(*file_size)   (void* file, void* user_data);
+    void*                       (*file_open)(const char* path, void* user_data);
+    void                        (*file_close)(void* file, void* user_data);
+    size_t                      (*file_read)(void* file, void* dst, size_t bytes, void* user_data);
+    unsigned long               (*file_size)(void* file, void* user_data);
 } fastObjCallbacks;
 
 #ifdef __cplusplus
