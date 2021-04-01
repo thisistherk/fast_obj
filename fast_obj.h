@@ -1,11 +1,11 @@
 /*
  * fast_obj
  *
- * Version 1.0
+ * Version 1.1
  *
  * MIT License
  *
- * Copyright (c) 2018-2020 Richard Knight
+ * Copyright (c) 2018-2021 Richard Knight
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
