@@ -523,7 +523,7 @@ const char* parse_float(const char* ptr, float* val)
     double        num;
     double        fra;
     double        div;
-    int           eval;
+    unsigned int  eval;
     const double* powers;
 
 
