@@ -1,7 +1,7 @@
 /*
  * fast_obj
  *
- * Version 1.1
+ * Version 1.2
  *
  * MIT License
  *
@@ -31,7 +31,7 @@
 #define FAST_OBJ_HDR
 
 #define FAST_OBJ_VERSION_MAJOR  1
-#define FAST_OBJ_VERSION_MINOR  1
+#define FAST_OBJ_VERSION_MINOR  2
 #define FAST_OBJ_VERSION        ((FAST_OBJ_VERSION_MAJOR << 8) | FAST_OBJ_VERSION_MINOR)
 
 #include <stdlib.h>
