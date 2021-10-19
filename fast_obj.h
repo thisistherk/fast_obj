@@ -506,7 +506,7 @@ void flush_object(fastObjData* data)
 
     /* Reset for more data */
     data->object = object_default();
-    data->object.face_offset = array_size(data->mesh->face_vertices);
+    data->object.face_offset  = array_size(data->mesh->face_vertices);
     data->object.index_offset = array_size(data->mesh->indices);
 }
 
@@ -544,7 +544,7 @@ void flush_group(fastObjData* data)
 
     /* Reset for more data */
     data->group = group_default();
-    data->group.face_offset = array_size(data->mesh->face_vertices);
+    data->group.face_offset  = array_size(data->mesh->face_vertices);
     data->group.index_offset = array_size(data->mesh->indices);
 }
 
@@ -772,6 +772,7 @@ const char* parse_face(fastObjData* data, const char* ptr)
     array_push(data->mesh->face_materials, data->material);
 
     data->group.face_count++;
+    data->object.face_count++;
 
     return ptr;
 }
