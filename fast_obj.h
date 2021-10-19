@@ -96,23 +96,6 @@ typedef struct
 
 typedef struct
 {
-    /* Object name */
-    char*                       name;
-
-    /* Number of faces */
-    unsigned int                face_count;
-
-    /* First face in fastObjMesh face_* arrays */
-    unsigned int                face_offset;
-
-    /* First index in fastObjMesh indices array */
-    unsigned int                index_offset;
-
-} fastObjObject;
-
-
-typedef struct
-{
     /* Group name */
     char*                       name;
 
@@ -152,11 +135,11 @@ typedef struct
     unsigned int                material_count;
     fastObjMaterial*            materials;
 
-    /* Mesh objects */
+    /* Mesh objects ('o' tag in .obj file) */
     unsigned int                object_count;
-    fastObjObject*              objects;
+    fastObjGroup*               objects;
 
-    /* Mesh groups */
+    /* Mesh groups ('g' tag in .obj file) */
     unsigned int                group_count;
     fastObjGroup*               groups;
 
@@ -219,7 +202,7 @@ typedef struct
     fastObjMesh*                mesh;
 
     /* Current object/group */
-    fastObjObject               object;
+    fastObjGroup                object;
     fastObjGroup                group;
 
     /* Current material index */
@@ -475,9 +458,9 @@ const char* skip_line(const char* ptr)
 
 
 static
-fastObjObject object_default(void)
+fastObjGroup object_default(void)
 {
-    fastObjObject object;
+    fastObjGroup object;
 
     object.name         = 0;
     object.face_count   = 0;
@@ -489,7 +472,7 @@ fastObjObject object_default(void)
 
 
 static
-void object_clean(fastObjObject* object)
+void object_clean(fastObjGroup* object)
 {
     memory_dealloc(object->name);
 }
