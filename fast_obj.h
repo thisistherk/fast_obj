@@ -129,6 +129,7 @@ typedef struct
     unsigned int*               face_materials;
 
     /* Index data: one element for each face vertex */
+    unsigned int                index_count;
     fastObjIndex*               indices;
 
     /* Materials */
@@ -1508,6 +1509,7 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
     m->texcoord_count = array_size(m->texcoords) / 2;
     m->normal_count   = array_size(m->normals) / 3;
     m->face_count     = array_size(m->face_vertices);
+    m->index_count    = array_size(m->indices);
     m->material_count = array_size(m->materials);
     m->object_count   = array_size(m->objects);
     m->group_count    = array_size(m->groups);
