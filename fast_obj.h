@@ -451,8 +451,8 @@ const char* skip_whitespace(const char* ptr)
 static
 const char* skip_line(const char* ptr)
 {
-    while (!is_newline(*ptr++))
-        ;
+    while (!is_newline(*ptr))
+        ptr++;
 
     return ptr;
 }
