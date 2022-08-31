@@ -1198,6 +1198,10 @@ const char* parse_mtllib(fastObjData* data, const char* ptr, const fastObjCallba
     e = ptr;
 
     lib = string_concat(data->base, s, e);
+
+    while (lib[strlen(lib) - 1] == ' ')
+        lib[strlen(lib) - 1] = '\0';
+
     if (lib)
     {
         string_fix_separators(lib);
