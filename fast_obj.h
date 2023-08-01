@@ -90,6 +90,7 @@ typedef struct
     fastObjUInt                 p;
     fastObjUInt                 t;
     fastObjUInt                 n;
+    fastObjUInt                 c;
 
 } fastObjIndex;
 
@@ -122,6 +123,9 @@ typedef struct
 
     unsigned int                normal_count;
     float*                      normals;
+
+    unsigned int                color_count;
+    float*                      colors;
 
     /* Face data: one element for each face */
     unsigned int                face_count;
@@ -655,6 +659,19 @@ const char* parse_vertex(fastObjData* data, const char* ptr)
         array_push(data->mesh->positions, v);
     }
 
+    // extract color data
+    for (ii = 0; ii < 3; ii++)
+    {
+        const char* tmp = parse_float(ptr, &v);
+        // if there's no data, we default to white
+        if (tmp == ptr)
+        {
+            v = 1.0f;
+        }
+        ptr = tmp;
+        array_push(data->mesh->colors, v);
+    }
+
     return ptr;
 }
 
@@ -744,6 +761,8 @@ const char* parse_face(fastObjData* data, const char* ptr)
             vn.n = (fastObjUInt)(n);
         else
             vn.n = 0;
+
+        vn.c = vn.p;
 
         array_push(data->mesh->indices, vn);
         count++;
@@ -1346,6 +1365,7 @@ void fast_obj_destroy(fastObjMesh* m)
     array_clean(m->positions);
     array_clean(m->texcoords);
     array_clean(m->normals);
+    array_clean(m->colors);
     array_clean(m->face_vertices);
     array_clean(m->face_materials);
     array_clean(m->indices);
@@ -1400,6 +1420,7 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
     m->positions      = 0;
     m->texcoords      = 0;
     m->normals        = 0;
+    m->colors         = 0;
     m->face_vertices  = 0;
     m->face_materials = 0;
     m->indices        = 0;
@@ -1420,6 +1441,9 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
     array_push(m->normals, 0.0f);
     array_push(m->normals, 1.0f);
 
+    array_push(m->colors, 0.0f);
+    array_push(m->colors, 0.0f);
+    array_push(m->colors, 0.0f);
 
     /* Data needed during parsing */
     data.mesh     = m;
@@ -1507,6 +1531,7 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
     m->position_count = array_size(m->positions) / 3;
     m->texcoord_count = array_size(m->texcoords) / 2;
     m->normal_count   = array_size(m->normals) / 3;
+    m->color_count    = array_size(m->colors) / 3;
     m->face_count     = array_size(m->face_vertices);
     m->index_count    = array_size(m->indices);
     m->material_count = array_size(m->materials);
