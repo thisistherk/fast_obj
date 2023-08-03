@@ -90,7 +90,6 @@ typedef struct
     fastObjUInt                 p;
     fastObjUInt                 t;
     fastObjUInt                 n;
-    fastObjUInt                 c;
 
 } fastObjIndex;
 
@@ -205,9 +204,6 @@ typedef struct
 {
     /* Final mesh */
     fastObjMesh*                mesh;
-
-    /* Position index goes to color index map */
-    unsigned int*               vertex_color_index;
 
     /* Current object/group */
     fastObjGroup                object;
@@ -661,29 +657,22 @@ const char* parse_vertex(fastObjData* data, const char* ptr)
         array_push(data->mesh->positions, v);
     }
 
-#ifdef FAST_OBJ_ENABLE_COLOURS
-#ifndef FAST_OBJ_LAZY_FILL
-    /* Default the vertex color to the default color index */
-    array_push(data->vertex_color_index, 0);
-#endif
+
     ptr = skip_whitespace(ptr);
     if (!is_newline(*ptr))
     {
-#ifdef FAST_OBJ_LAZY_FILL
-        unsigned int oldSz = array_size(data->vertex_color_index);
-        _array_grow(data->vertex_color_index, array_size(data->mesh->positions) / 3);
-        _array_size(data->vertex_color_index) = array_size(data->mesh->positions) / 3;
-        memset(data->vertex_color_index + oldSz, 0, array_size(data->vertex_color_index) - oldSz);
-#endif
-        /* We associate the current vertex position with the vertex color */
-        data->vertex_color_index[array_size(data->vertex_color_index) - 1] = array_size(data->mesh->colors) / 3;
+        /* Fill the colors array until it matches the size of the positions array */
+        for (ii = array_size(data->mesh->colors); ii < array_size(data->mesh->positions) - 3; ++ii)
+        {
+            array_push(data->mesh->colors, 1.0f);
+        }
+
         for (ii = 0; ii < 3; ++ii)
         {
             ptr = parse_float(ptr, &v);
             array_push(data->mesh->colors, v);
         }
     }
-#endif
 
     return ptr;
 }
@@ -774,12 +763,6 @@ const char* parse_face(fastObjData* data, const char* ptr)
             vn.n = (fastObjUInt)(n);
         else
             vn.n = 0;
-
-#ifdef FAST_OBJ_ENABLE_COLOURS
-        vn.c = data->vertex_color_index[vn.p];
-#else
-        vn.c = 0;
-#endif
 
         array_push(data->mesh->indices, vn);
         count++;
@@ -1362,15 +1345,15 @@ void parse_buffer(fastObjData* data, const char* ptr, const char* end, const fas
 
         data->line++;
     }
-#ifdef FAST_OBJ_LAZY_FILL
-    if (array_size(data->vertex_color_index) < array_size(data->mesh->positions) / 3)
+    if (array_size(data->mesh->colors) > 0)
     {
-        unsigned int oldSz = array_size(data->vertex_color_index);
-        _array_grow(data->vertex_color_index, array_size(data->mesh->positions) / 3);
-        _array_size(data->vertex_color_index) = array_size(data->mesh->positions) / 3;
-        memset(data->vertex_color_index + oldSz, 0, array_size(data->vertex_color_index) - oldSz);
+        /* Fill the remaining slots in the colors array */
+        unsigned int ii;
+        for (ii = array_size(data->mesh->colors); ii < array_size(data->mesh->positions); ++ii)
+        {
+            array_push(data->mesh->colors, 1.0f);
+        }
     }
-#endif
 }
 
 
@@ -1391,9 +1374,7 @@ void fast_obj_destroy(fastObjMesh* m)
     array_clean(m->positions);
     array_clean(m->texcoords);
     array_clean(m->normals);
-#ifdef FAST_OBJ_ENABLE_COLOURS
     array_clean(m->colors);
-#endif
     array_clean(m->face_vertices);
     array_clean(m->face_materials);
     array_clean(m->indices);
@@ -1447,10 +1428,7 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
 
     m->positions      = 0;
     m->texcoords      = 0;
-    m->normals        = 0;
-#ifdef FAST_OBJ_ENABLE_COLOURS
     m->colors         = 0;
-#endif
     m->face_vertices  = 0;
     m->face_materials = 0;
     m->indices        = 0;
@@ -1471,24 +1449,14 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
     array_push(m->normals, 0.0f);
     array_push(m->normals, 1.0f);
 
-#ifdef FAST_OBJ_ENABLE_COLOURS
-    /* Default white color */
-    array_push(m->colors, 1.0f);
-    array_push(m->colors, 1.0f);
-    array_push(m->colors, 1.0f);
-#endif
 
     /* Data needed during parsing */
     data.mesh               = m;
-    data.vertex_color_index = 0;
     data.object             = object_default();
     data.group              = group_default();
     data.material           = 0;
     data.line               = 1;
     data.base               = 0;
-
-    /* Dummy position is assigned to the dummy color */
-    array_push(data.vertex_color_index, 0);
 
 
     /* Find base path for materials/textures */
@@ -1568,9 +1536,7 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
     m->position_count = array_size(m->positions) / 3;
     m->texcoord_count = array_size(m->texcoords) / 2;
     m->normal_count   = array_size(m->normals) / 3;
-#ifdef FAST_OBJ_ENABLE_COLOURS
     m->color_count    = array_size(m->colors) / 3;
-#endif
     m->face_count     = array_size(m->face_vertices);
     m->index_count    = array_size(m->indices);
     m->material_count = array_size(m->materials);
@@ -1581,7 +1547,6 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
     /* Clean up */
     memory_dealloc(buffer);
     memory_dealloc(data.base);
-    array_clean(data.vertex_color_index);
 
     callbacks->file_close(file, user_data);
 
