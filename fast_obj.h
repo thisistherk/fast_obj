@@ -1453,12 +1453,12 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
 
 
     /* Data needed during parsing */
-    data.mesh               = m;
-    data.object             = object_default();
-    data.group              = group_default();
-    data.material           = 0;
-    data.line               = 1;
-    data.base               = 0;
+    data.mesh     = m;
+    data.object   = object_default();
+    data.group    = group_default();
+    data.material = 0;
+    data.line     = 1;
+    data.base     = 0;
 
 
     /* Find base path for materials/textures */
