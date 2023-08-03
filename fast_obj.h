@@ -651,6 +651,7 @@ const char* parse_vertex(fastObjData* data, const char* ptr)
     unsigned int ii;
     float        v;
 
+
     for (ii = 0; ii < 3; ii++)
     {
         ptr = parse_float(ptr, &v);
@@ -1428,6 +1429,7 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
 
     m->positions      = 0;
     m->texcoords      = 0;
+    m->normals        = 0;
     m->colors         = 0;
     m->face_vertices  = 0;
     m->face_materials = 0;
