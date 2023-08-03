@@ -662,11 +662,19 @@ const char* parse_vertex(fastObjData* data, const char* ptr)
     }
 
 #ifdef FAST_OBJ_ENABLE_COLOURS
+#ifndef FAST_OBJ_LAZY_FILL
     /* Default the vertex color to the default color index */
     array_push(data->vertex_color_index, 0);
+#endif
     ptr = skip_whitespace(ptr);
     if (!is_newline(*ptr))
     {
+#ifdef FAST_OBJ_LAZY_FILL
+        unsigned int oldSz = array_size(data->vertex_color_index);
+        _array_grow(data->vertex_color_index, array_size(data->mesh->positions) / 3);
+        _array_size(data->vertex_color_index) = array_size(data->mesh->positions) / 3;
+        memset(data->vertex_color_index + oldSz, 0, array_size(data->vertex_color_index) - oldSz);
+#endif
         /* We associate the current vertex position with the vertex color */
         data->vertex_color_index[array_size(data->vertex_color_index) - 1] = array_size(data->mesh->colors) / 3;
         for (ii = 0; ii < 3; ++ii)
@@ -1354,6 +1362,15 @@ void parse_buffer(fastObjData* data, const char* ptr, const char* end, const fas
 
         data->line++;
     }
+#ifdef FAST_OBJ_LAZY_FILL
+    if (array_size(data->vertex_color_index) < array_size(data->mesh->positions) / 3)
+    {
+        unsigned int oldSz = array_size(data->vertex_color_index);
+        _array_grow(data->vertex_color_index, array_size(data->mesh->positions) / 3);
+        _array_size(data->vertex_color_index) = array_size(data->mesh->positions) / 3;
+        memset(data->vertex_color_index + oldSz, 0, array_size(data->vertex_color_index) - oldSz);
+    }
+#endif
 }
 
 
