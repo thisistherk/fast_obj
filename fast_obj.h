@@ -760,8 +760,10 @@ const char* parse_face(fastObjData* data, const char* ptr)
 
         if (v < 0)
             vn.p = (array_size(data->mesh->positions) / 3) - (fastObjUInt)(-v);
-        else
+        else if (v > 0)
             vn.p = (fastObjUInt)(v);
+        else
+            return ptr; /* Skip lines with no valid vertex index */
 
         if (t < 0)
             vn.t = (array_size(data->mesh->texcoords) / 2) - (fastObjUInt)(-t);
