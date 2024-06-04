@@ -21,4 +21,9 @@ the mesh arrays.
 A simple test app is provided to compare speed against [tinyobjloader](https://github.com/syoyo/tinyobjloader) and
 check output matches.
 
+### Version 1.3
+
+Version 1.3 makes a small change to the API.  Textures are now stored in a separate array on the
+`fastObjMesh` structure, and are referenced by index from materials, instead of being referenced
+by the material directly.
 
