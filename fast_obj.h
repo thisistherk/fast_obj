@@ -1036,14 +1036,12 @@ const char* read_map(fastObjData* data, const char* ptr, unsigned int* idx)
     if (*idx == array_size(data->mesh->textures))
     {
         fastObjTexture new_map = map_default();
-        if (path)
-        {
-            new_map.name = string_copy(s, e);
+        new_map.name = string_copy(s, e);
+
+        if (path) {
             new_map.path = string_copy(path, e);
         }
-        else
-        {
-            new_map.name = string_copy(s, e);
+        else {
             new_map.path = string_concat(data->base, s, e);
         }
         string_fix_separators(new_map.path);
