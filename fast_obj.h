@@ -169,7 +169,7 @@ typedef struct
 } fastObjCallbacks;
 
 typedef void* (*fastObjRealloc)(void* ptr, size_t new_size, size_t old_size, void* context);
-typedef void (*fastObjFree)(void* ptr, size_t size, void* context);
+typedef void (*fastObjFree)(void* ptr, void* context);
 
 #ifdef __cplusplus
 extern "C" {
@@ -260,9 +260,8 @@ void* default_memory_realloc(void* ptr, size_t new_size, size_t old_size, void* 
 }
 
 static
-void default_memory_dealloc(void* ptr, size_t size, void* context)
+void default_memory_dealloc(void* ptr, void* context)
 {
-    (void*)(size);
     (void*)(context);
     FAST_OBJ_FREE(ptr);
 }
@@ -278,7 +277,7 @@ static
 void* memory_context = 0;
 
 
-#define array_clean(_arr)       ((_arr) ? array_dealloc(_array_header(_arr), sizeof(*(_arr))), 0 : 0)
+#define array_clean(_arr)       ((_arr) ? memory_dealloc(_array_header(_arr), memory_context), 0 : 0)
 #define array_push(_arr, _val)  (_array_mgrow(_arr, 1) ? ((_arr)[_array_size(_arr)++] = (_val), _array_size(_arr) - 1) : 0)
 #define array_size(_arr)        ((_arr) ? _array_size(_arr) : 0)
 #define array_capacity(_arr)    ((_arr) ? _array_capacity(_arr) : 0)
@@ -315,17 +314,6 @@ void* array_realloc(void* ptr, fastObjUInt n, fastObjUInt b)
     r[1] = ncap;
 
     return (r + 2);
-}
-
-
-static
-void array_dealloc(void* ptr, fastObjUInt b)
-{
-    fastObjUInt cap = array_capacity(ptr);
-    size_t bsz = (size_t)b * cap + 2 * sizeof(fastObjUInt);
-
-    if (ptr)
-        memory_dealloc(_array_header(ptr), bsz, memory_context);
 }
 
 
@@ -522,9 +510,7 @@ fastObjGroup object_default(void)
 static
 void object_clean(fastObjGroup* object)
 {
-    size_t namesz = object->name ? strlen(object->name) + 1 : 0;
-
-    memory_dealloc(object->name, namesz, memory_context);
+    memory_dealloc(object->name, memory_context);
 }
 
 
@@ -562,9 +548,7 @@ fastObjGroup group_default(void)
 static
 void group_clean(fastObjGroup* group)
 {
-    size_t namesz = group->name ? strlen(group->name) + 1 : 0;
-
-    memory_dealloc(group->name, namesz, memory_context);
+    memory_dealloc(group->name, memory_context);
 }
 
 
@@ -976,20 +960,15 @@ const char* parse_usemtl(fastObjData* data, const char* ptr)
 static
 void map_clean(fastObjTexture* map)
 {
-    size_t namesz = map->name ? strlen(map->name) + 1 : 0;
-    size_t pathsz = map->path ? strlen(map->path) + 1 : 0;
-
-    memory_dealloc(map->name, namesz, memory_context);
-    memory_dealloc(map->path, pathsz, memory_context);
+    memory_dealloc(map->name, memory_context);
+    memory_dealloc(map->path, memory_context);
 }
 
 
 static
 void mtl_clean(fastObjMaterial* mtl)
 {
-    size_t namesz = mtl->name ? strlen(mtl->name) + 1 : 0;
-
-    memory_dealloc(mtl->name, namesz, memory_context);
+    memory_dealloc(mtl->name, memory_context);
 }
 
 
@@ -1246,7 +1225,7 @@ int read_mtllib(fastObjData* data, void* file, const fastObjCallbacks* callbacks
     if (mtl.name)
         array_push(data->mesh->materials, mtl);
 
-    memory_dealloc(contents, n + 1, memory_context);
+    memory_dealloc(contents, memory_context);
 
     return 1;
 }
@@ -1280,8 +1259,7 @@ const char* parse_mtllib(fastObjData* data, const char* ptr, const fastObjCallba
             callbacks->file_close(file, user_data);
         }
 
-        libsz = strlen(lib) + 1;
-        memory_dealloc(lib, libsz, memory_context);
+        memory_dealloc(lib, memory_context);
     }
 
     return ptr;
@@ -1448,7 +1426,7 @@ void fast_obj_destroy(fastObjMesh* m)
     array_clean(m->materials);
     array_clean(m->textures);
 
-    memory_dealloc(m, sizeof(fastObjMesh), memory_context);
+    memory_dealloc(m, memory_context);
 }
 
 
@@ -1616,8 +1594,8 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
 
 
     /* Clean up */
-    memory_dealloc(buffer, 2 * BUFFER_SIZE * sizeof(char), memory_context);
-    memory_dealloc(data.base, data.base ? strlen(data.base) + 1 : 0, memory_context);
+    memory_dealloc(buffer, memory_context);
+    memory_dealloc(data.base, memory_context);
 
     callbacks->file_close(file, user_data);
 
