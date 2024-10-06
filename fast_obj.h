@@ -168,6 +168,7 @@ typedef struct
     unsigned long               (*file_size)(void* file, void* user_data);
 } fastObjCallbacks;
 
+/* By default, these will fallback to FAST_OBJ_REALLOC and FAST_OBJ_FREE. */
 typedef void* (*fastObjRealloc)(void* ptr, size_t new_size, size_t old_size, void* context);
 typedef void (*fastObjFree)(void* ptr, void* context);
 
@@ -176,6 +177,7 @@ extern "C" {
 #endif
 
 void                            fast_obj_set_memory_functions(fastObjRealloc realloc_fn, fastObjFree free_fn, void* user_data);
+
 fastObjMesh*                    fast_obj_read(const char* path);
 fastObjMesh*                    fast_obj_read_with_callbacks(const char* path, const fastObjCallbacks* callbacks, void* user_data);
 void                            fast_obj_destroy(fastObjMesh* mesh);
@@ -298,14 +300,16 @@ void* array_realloc(void* ptr, fastObjUInt n, fastObjUInt b)
     fastObjUInt nsz = sz + n;
     fastObjUInt cap = array_capacity(ptr);
     fastObjUInt ncap = cap + cap / 2;
+    size_t bsz;
+    size_t nbsz;
     fastObjUInt* r;
 
     if (ncap < nsz)
         ncap = nsz;
     ncap = (ncap + 15) & ~15u;
 
-    size_t bsz = (size_t)b * cap + 2 * sizeof(fastObjUInt);
-    size_t nbsz = (size_t)b * ncap + 2 * sizeof(fastObjUInt);
+    bsz = (size_t)b * cap + 2 * sizeof(fastObjUInt);
+    nbsz = (size_t)b * ncap + 2 * sizeof(fastObjUInt);
     r = (fastObjUInt*)(memory_realloc(ptr ? _array_header(ptr) : 0, nbsz, bsz, memory_context));
     if (!r)
         return 0;
@@ -1237,7 +1241,6 @@ const char* parse_mtllib(fastObjData* data, const char* ptr, const fastObjCallba
     const char* s;
     const char* e;
     char*       lib;
-    size_t      libsz;
     void*       file;
 
 
