@@ -1,7 +1,7 @@
 /*
  * fast_obj
  *
- * Version 1.3
+ * Version 1.4
  *
  * MIT License
  *
@@ -31,7 +31,7 @@
 #define FAST_OBJ_HDR
 
 #define FAST_OBJ_VERSION_MAJOR  1
-#define FAST_OBJ_VERSION_MINOR  3
+#define FAST_OBJ_VERSION_MINOR  4
 #define FAST_OBJ_VERSION        ((FAST_OBJ_VERSION_MAJOR << 8) | FAST_OBJ_VERSION_MINOR)
 
 #include <stdlib.h>
@@ -168,9 +168,15 @@ typedef struct
     unsigned long               (*file_size)(void* file, void* user_data);
 } fastObjCallbacks;
 
+/* By default, these will fallback to FAST_OBJ_REALLOC and FAST_OBJ_FREE. */
+typedef void* (*fastObjRealloc)(void* ptr, size_t new_size, size_t old_size, void* context);
+typedef void (*fastObjFree)(void* ptr, void* context);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void                            fast_obj_set_memory_functions(fastObjRealloc realloc_fn, fastObjFree free_fn, void* user_data);
 
 fastObjMesh*                    fast_obj_read(const char* path);
 fastObjMesh*                    fast_obj_read_with_callbacks(const char* path, const fastObjCallbacks* callbacks, void* user_data);
@@ -247,20 +253,33 @@ double POWER_10_NEG[MAX_POWER] =
 };
 
 
-static void* memory_realloc(void* ptr, size_t bytes)
+static
+void* default_memory_realloc(void* ptr, size_t new_size, size_t old_size, void* context)
 {
-    return FAST_OBJ_REALLOC(ptr, bytes);
+    (void*)(old_size);
+    (void*)(context);
+    return FAST_OBJ_REALLOC(ptr, new_size);
 }
 
-
 static
-void memory_dealloc(void* ptr)
+void default_memory_dealloc(void* ptr, void* context)
 {
+    (void*)(context);
     FAST_OBJ_FREE(ptr);
 }
 
 
-#define array_clean(_arr)       ((_arr) ? memory_dealloc(_array_header(_arr)), 0 : 0)
+static
+fastObjRealloc memory_realloc = default_memory_realloc;
+
+static
+fastObjFree memory_dealloc = default_memory_dealloc;
+
+static
+void* memory_context = 0;
+
+
+#define array_clean(_arr)       ((_arr) ? memory_dealloc(_array_header(_arr), memory_context), 0 : 0)
 #define array_push(_arr, _val)  (_array_mgrow(_arr, 1) ? ((_arr)[_array_size(_arr)++] = (_val), _array_size(_arr) - 1) : 0)
 #define array_size(_arr)        ((_arr) ? _array_size(_arr) : 0)
 #define array_capacity(_arr)    ((_arr) ? _array_capacity(_arr) : 0)
@@ -274,19 +293,24 @@ void memory_dealloc(void* ptr)
 #define _array_grow(_arr, _n)   (*((void**)&(_arr)) = array_realloc(_arr, _n, sizeof(*(_arr))))
 
 
-static void* array_realloc(void* ptr, fastObjUInt n, fastObjUInt b)
+static
+void* array_realloc(void* ptr, fastObjUInt n, fastObjUInt b)
 {
     fastObjUInt sz = array_size(ptr);
     fastObjUInt nsz = sz + n;
     fastObjUInt cap = array_capacity(ptr);
     fastObjUInt ncap = cap + cap / 2;
+    size_t bsz;
+    size_t nbsz;
     fastObjUInt* r;
 
     if (ncap < nsz)
         ncap = nsz;
     ncap = (ncap + 15) & ~15u;
 
-    r = (fastObjUInt*)(memory_realloc(ptr ? _array_header(ptr) : 0, (size_t)b * ncap + 2 * sizeof(fastObjUInt)));
+    bsz = (size_t)b * cap + 2 * sizeof(fastObjUInt);
+    nbsz = (size_t)b * ncap + 2 * sizeof(fastObjUInt);
+    r = (fastObjUInt*)(memory_realloc(ptr ? _array_header(ptr) : 0, nbsz, bsz, memory_context));
     if (!r)
         return 0;
 
@@ -310,7 +334,7 @@ void file_close(void* file, void* user_data)
 {
     FILE* f;
     (void)(user_data);
-    
+
     f = (FILE*)(file);
     fclose(f);
 }
@@ -321,7 +345,7 @@ size_t file_read(void* file, void* dst, size_t bytes, void* user_data)
 {
     FILE* f;
     (void)(user_data);
-    
+
     f = (FILE*)(file);
     return fread(dst, 1, bytes, f);
 }
@@ -354,9 +378,9 @@ char* string_copy(const char* s, const char* e)
 {
     size_t n;
     char*  p;
-        
+
     n = (size_t)(e - s);
-    p = (char*)(memory_realloc(0, n + 1));
+    p = (char*)(memory_realloc(0, n + 1, 0, memory_context));
     if (p)
     {
         memcpy(p, s, n);
@@ -368,22 +392,15 @@ char* string_copy(const char* s, const char* e)
 
 
 static
-char* string_substr(const char* s, size_t a, size_t b)
-{
-    return string_copy(s + a, s + b);
-}
-
-
-static
 char* string_concat(const char* a, const char* s, const char* e)
 {
     size_t an;
     size_t sn;
     char*  p;
-        
+
     an = a ? strlen(a) : 0;
     sn = (size_t)(e - s);
-    p = (char*)(memory_realloc(0, an + sn + 1));
+    p = (char*)(memory_realloc(0, an + sn + 1, 0, memory_context));
     if (p)
     {
         if (a)
@@ -497,7 +514,7 @@ fastObjGroup object_default(void)
 static
 void object_clean(fastObjGroup* object)
 {
-    memory_dealloc(object->name);
+    memory_dealloc(object->name, memory_context);
 }
 
 
@@ -535,7 +552,7 @@ fastObjGroup group_default(void)
 static
 void group_clean(fastObjGroup* group)
 {
-    memory_dealloc(group->name);
+    memory_dealloc(group->name, memory_context);
 }
 
 
@@ -947,15 +964,15 @@ const char* parse_usemtl(fastObjData* data, const char* ptr)
 static
 void map_clean(fastObjTexture* map)
 {
-    memory_dealloc(map->name);
-    memory_dealloc(map->path);
+    memory_dealloc(map->name, memory_context);
+    memory_dealloc(map->path, memory_context);
 }
 
 
 static
 void mtl_clean(fastObjMaterial* mtl)
 {
-    memory_dealloc(mtl->name);
+    memory_dealloc(mtl->name, memory_context);
 }
 
 
@@ -1045,7 +1062,7 @@ int read_mtllib(fastObjData* data, void* file, const fastObjCallbacks* callbacks
     /* Read entire file */
     n = callbacks->file_size(file, user_data);
 
-    contents = (char*)(memory_realloc(0, n + 1));
+    contents = (char*)(memory_realloc(0, n + 1, 0, memory_context));
     if (!contents)
         return 0;
 
@@ -1212,7 +1229,7 @@ int read_mtllib(fastObjData* data, void* file, const fastObjCallbacks* callbacks
     if (mtl.name)
         array_push(data->mesh->materials, mtl);
 
-    memory_dealloc(contents);
+    memory_dealloc(contents, memory_context);
 
     return 1;
 }
@@ -1245,7 +1262,7 @@ const char* parse_mtllib(fastObjData* data, const char* ptr, const fastObjCallba
             callbacks->file_close(file, user_data);
         }
 
-        memory_dealloc(lib);
+        memory_dealloc(lib, memory_context);
     }
 
     return ptr;
@@ -1256,8 +1273,8 @@ static
 void parse_buffer(fastObjData* data, const char* ptr, const char* end, const fastObjCallbacks* callbacks, void* user_data)
 {
     const char* p;
-    
-    
+
+
     p = ptr;
     while (p != end)
     {
@@ -1375,6 +1392,14 @@ void parse_buffer(fastObjData* data, const char* ptr, const char* end, const fas
 }
 
 
+void fast_obj_set_memory_functions(fastObjRealloc realloc_fn, fastObjFree free_fn, void* user_data)
+{
+    memory_realloc = realloc_fn;
+    memory_dealloc = free_fn;
+    memory_context = user_data;
+}
+
+
 void fast_obj_destroy(fastObjMesh* m)
 {
     unsigned int ii;
@@ -1404,7 +1429,7 @@ void fast_obj_destroy(fastObjMesh* m)
     array_clean(m->materials);
     array_clean(m->textures);
 
-    memory_dealloc(m);
+    memory_dealloc(m, memory_context);
 }
 
 
@@ -1444,7 +1469,7 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
 
 
     /* Empty mesh */
-    m = (fastObjMesh*)(memory_realloc(0, sizeof(fastObjMesh)));
+    m = (fastObjMesh*)(memory_realloc(0, sizeof(fastObjMesh), 0, memory_context));
     if (!m)
         return 0;
 
@@ -1494,12 +1519,12 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
         const char* sep = sep2 && (!sep1 || sep1 < sep2) ? sep2 : sep1;
 
         if (sep)
-            data.base = string_substr(path, 0, sep - path + 1);
+            data.base = string_copy(path, path + (sep - path) + 1);
     }
 
 
     /* Create buffer for reading file */
-    buffer = (char*)(memory_realloc(0, 2 * BUFFER_SIZE * sizeof(char)));
+    buffer = (char*)(memory_realloc(0, 2 * BUFFER_SIZE * sizeof(char), 0, memory_context));
     if (!buffer)
         return 0;
 
@@ -1572,8 +1597,8 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
 
 
     /* Clean up */
-    memory_dealloc(buffer);
-    memory_dealloc(data.base);
+    memory_dealloc(buffer, memory_context);
+    memory_dealloc(data.base, memory_context);
 
     callbacks->file_close(file, user_data);
 
