@@ -1004,6 +1004,23 @@ const char* read_map(fastObjData* data, const char* ptr, unsigned int* idx)
     ptr = skip_name(ptr);
     e = ptr;
 
+    /* Find any separator in the name */
+    const char* sep = 0;
+    for (const char* p = s; p != e; ++p)
+    {
+        if (*p == FAST_OBJ_SEPARATOR || *p == FAST_OBJ_OTHER_SEP) {
+            sep = p;
+        }
+    }
+
+    /* Set path if separator found in the name */
+    const char* path = 0;
+    if (sep)
+    {
+        path = s;
+        s = &sep[1];
+    }
+
     /* Try to find an existing texture map with the same name */
     *idx = 1; /* skip dummy at index 0 */
     while (*idx < array_size(data->mesh->textures))
@@ -1020,7 +1037,13 @@ const char* read_map(fastObjData* data, const char* ptr, unsigned int* idx)
     {
         fastObjTexture new_map = map_default();
         new_map.name = string_copy(s, e);
-        new_map.path = string_concat(data->base, s, e);
+
+        if (path) {
+            new_map.path = string_copy(path, e);
+        }
+        else {
+            new_map.path = string_concat(data->base, s, e);
+        }
         string_fix_separators(new_map.path);
         array_push(data->mesh->textures, new_map);
     }
