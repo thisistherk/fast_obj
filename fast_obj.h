@@ -1201,6 +1201,18 @@ int read_mtllib(fastObjData* data, void* file, const fastObjCallbacks* callbacks
             }
             break;
 
+        case 'b':
+        case 'B':
+            p++;
+            if (p[0] == 'u' &&
+                p[1] == 'm' &&
+                p[2] == 'p' &&
+                is_whitespace(p[3]))
+            {
+                p = read_map(data, p + 3, &mtl.map_bump);
+            }
+            break;
+
         case '#':
             break;
         }
